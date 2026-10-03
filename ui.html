@@ -49,7 +49,7 @@ function show(m) {
 }
 async function loadRuns() {
   const rs = await fetch('/api/runs').then(r => r.json());
-  $('runs').innerHTML = rs.map(r => `<li data-id="${r.run_id}" data-f="${r.format}">${r.ts} · ${r.voice} · ${r.seconds}s · ${r.text.slice(0, 40)}…</li>`).join('') || '<li>없음</li>';
+  $('runs').innerHTML = rs.map(r => `<li data-id="${r.run_id}" data-f="${r.format}">${r.ts} · ${r.voice} · ${r.seconds}s · ${r.text.slice(0, 40).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}…</li>`).join('') || '<li>없음</li>';
   $('runs').querySelectorAll('li[data-id]').forEach(li => li.onclick = () => {
     const r = rs.find(x => x.run_id === li.dataset.id); $('in').value = r.text; show(r);
   });
