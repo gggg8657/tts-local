@@ -22,7 +22,7 @@ import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-WS = os.path.join(ROOT, "_workspace")
+WS = os.environ.get("WORKSPACE") or os.path.join(ROOT, "_workspace")  # 포털이 AGENT_DATA/<도구> 로 모아 줌
 PORT = int(os.environ.get("PORT", "8771"))
 ENGINE_NAME = os.environ.get("TTS_ENGINE", "melo")       # ponytail: melo만 구현. cosyvoice/kokoro(영문)은 README 참고
 DEVICE = os.environ.get("TTS_DEVICE", "auto")
