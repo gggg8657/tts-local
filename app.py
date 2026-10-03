@@ -76,6 +76,8 @@ def split_sentences(text):
 
 
 def wav_bytes(sr, pcm):
+    if not pcm:
+        raise ValueError("발음할 텍스트가 없습니다 (문장부호만?)")
     b = io.BytesIO()
     with wave.open(b, "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr); w.writeframes(pcm)
@@ -162,6 +164,7 @@ class H(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
 
     def do_GET(self):
+        self.path = self.path.split("?")[0]
         try:
             if self.path in ("/api/voices", "/v1/audio/voices"):
                 return self._send({"voices": ENGINE.voices(), "default": DEFAULT_VOICE, "engine": ENGINE_NAME})
@@ -180,6 +183,7 @@ class H(BaseHTTPRequestHandler):
             self._send({"error": f"{type(e).__name__}: {e}"}, code=500)
 
     def do_POST(self):
+        self.path = self.path.split("?")[0]
         try:
             req = self._json()
             text = req.get("input") or req.get("text") or ""
@@ -201,7 +205,7 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--cli":
         a = sys.argv[2:]
-        text = a[0] if a and not a[0].startswith("-") else sys.stdin.read()
+        text = a[0] if a and not a[0].startswith("-") else ("" if sys.stdin.isatty() else sys.stdin.read())
         g = lambda k, d: a[a.index(k) + 1] if k in a else d
         out = g("-o", "out.wav")
         data, _, secs = speak(text, g("--voice", DEFAULT_VOICE), float(g("--speed", 1.0)), out.rsplit(".", 1)[-1],
