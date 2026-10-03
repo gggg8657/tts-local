@@ -1,0 +1,12 @@
+tts-local
+=========
+
+This package wraps (does not modify) the following open-source software:
+
+  MeloTTS — https://github.com/myshell-ai/MeloTTS   (MIT, MyShell.ai)
+    Korean checkpoint: https://huggingface.co/myshell-ai/MeloTTS-Korean (MIT)
+    Korean BERT used by the Korean frontend: https://huggingface.co/kykim/bert-kor-base
+  python-mecab-ko + mecab-ko-dic — Korean morphological analyzer used by g2pkk (Apache-2.0 / BSD-style)
+  g2pkk — Korean grapheme-to-phoneme (Apache-2.0)
+
+Files authored for this package (MIT): app.py, ui.html, selftest.py, setup.sh, pack.sh, MeCab.py, README.md
