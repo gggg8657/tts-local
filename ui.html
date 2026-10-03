@@ -36,7 +36,7 @@
 <script>
 const $ = id => document.getElementById(id);
 const VOICE_DEFAULT = %VOICE%;
-fetch('/api/voices').then(r => r.json()).then(j => {
+fetch('api/voices').then(r => r.json()).then(j => {
   $('voice').innerHTML = j.voices.map(v => `<option ${v === VOICE_DEFAULT ? 'selected' : ''}>${v}</option>`).join('');
 }).catch(() => $('status').textContent = '엔진 로드 실패 (server.log 확인)');
 $('speed').oninput = () => $('spv').textContent = Number($('speed').value).toFixed(1);
@@ -48,7 +48,7 @@ function show(m) {
   $('status').textContent = `완료 · ${m.seconds}초 분량`;
 }
 async function loadRuns() {
-  const rs = await fetch('/api/runs').then(r => r.json());
+  const rs = await fetch('api/runs').then(r => r.json());
   $('runs').innerHTML = rs.map(r => `<li data-id="${r.run_id}" data-f="${r.format}">${r.ts} · ${r.voice} · ${r.seconds}s · ${r.text.slice(0, 40).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}…</li>`).join('') || '<li>없음</li>';
   $('runs').querySelectorAll('li[data-id]').forEach(li => li.onclick = () => {
     const r = rs.find(x => x.run_id === li.dataset.id); $('in').value = r.text; show(r);
@@ -59,7 +59,7 @@ $('go').onclick = async () => {
   const text = $('in').value.trim(); if (!text) return;
   $('go').disabled = true; $('status').textContent = '합성 중 — 첫 호출은 모델 로드로 수십 초';
   try {
-    const r = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const r = await fetch('api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, voice: $('voice').value, speed: Number($('speed').value), format: $('fmt').value }) });
     const j = await r.json(); if (j.error) throw new Error(j.error.message || j.error);
     show(j); loadRuns();
