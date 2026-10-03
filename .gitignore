@@ -1,0 +1,7 @@
+.venv/
+_workspace/
+__pycache__/
+dist-offline/
+models/
+.server.pid
+server.log

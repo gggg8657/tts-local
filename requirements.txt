@@ -1,0 +1,3 @@
+melotts @ git+https://github.com/myshell-ai/MeloTTS.git
+setuptools<70
+python-mecab-ko
