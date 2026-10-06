@@ -82,7 +82,7 @@ import os; os.environ.setdefault('PYTHONWARNINGS','ignore')
 from melo.api import TTS; TTS(language='KR', device='cpu')" || die "모델 로드 실패 (폐쇄망이면 models/ 번들 + HF_HUB_OFFLINE=1)"
 ok "준비됨"
 
-step "자가검증"; spin "파이프라인 (분리·연결·mp3·API 파싱)" .venv/bin/python selftest.py || die "selftest 실패"; ok "통과"
+step "자가검증"; spin "파이프라인 (분리·연결·mp3·API 파싱)" env -u WORKSPACE .venv/bin/python selftest.py || die "selftest 실패"; ok "통과"
 
 step "서버"; [ -f .server.pid ] && kill "$(cat .server.pid)" 2>/dev/null || true
 has lsof && lsof -tnP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true; sleep 1   # 이전 서버 잔존 시
