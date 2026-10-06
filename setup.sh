@@ -29,6 +29,21 @@ step "Python 3.11"; PY=""; for c in python3.11 python3.12 python3.10 python3; do
 [ -n "$PY" ] || die "Python 3.10~3.12 필요 (mac: brew install python@3.11 / linux: apt install python3.11-venv)"
 ok "$($PY --version) ($PY)"
 
+# GPU 드라이버에 맞는 torch — PyPI 기본 torch 는 CUDA 13 빌드라 드라이버가 CUDA 12.x 면 GPU 를 못 쓴다(드라이버 570 = 12.8)
+TORCH_CU=""; TORCH_ARGS=()
+if command -v nvidia-smi >/dev/null 2>&1; then
+  _cu=$(nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: \([0-9]*\)\.\([0-9]*\).*/\1\2/p' | head -1)
+  if [ -n "$_cu" ] && [ "$_cu" -lt 130 ]; then TORCH_CU=cu121; [ "$_cu" -ge 124 ] && TORCH_CU=cu124; [ "$_cu" -ge 126 ] && TORCH_CU=cu126
+    if command -v uv >/dev/null; then TORCH_ARGS=(--torch-backend "$TORCH_CU"); else TORCH_ARGS=(--extra-index-url "https://download.pytorch.org/whl/$TORCH_CU"); fi; fi
+fi
+torch_gpu_fix() {  # 이미 깔린 torch 가 GPU 를 못 잡으면 드라이버에 맞는 빌드로 다시 (폐쇄망 wheels 번들은 건드리지 않음)
+  local py=$1; shift; [ -n "$TORCH_CU" ] && [ ! -d wheels ] || return 0
+  "$py" -c "import torch,sys;sys.exit(0 if torch.cuda.is_available() else 1)" 2>/dev/null && return 0
+  echo "  · torch 를 GPU 드라이버에 맞는 $TORCH_CU 빌드로 다시 설치"
+  if command -v uv >/dev/null; then uv pip install -q -p "$py" --reinstall-package torch --torch-backend "$TORCH_CU" "$@"
+  else "$py" -m pip install -q --force-reinstall --no-deps --extra-index-url "https://download.pytorch.org/whl/$TORCH_CU" "$@"; fi
+}
+
 step "venv·의존성"
 # ponytail: uv venv 에는 pip 이 없다 → 설치/삭제는 전부 이 헬퍼로 (uv 있으면 uv pip, 없으면 python -m pip)
 pipx() { local c=$1; shift; if has uv; then uv pip "$c" -q -p .venv/bin/python "$@"; else .venv/bin/python -m pip "$c" -q "$@"; fi; }
@@ -40,7 +55,7 @@ else
     spin "오프라인 wheels 설치" pipx install --no-index --find-links wheels -r requirements.txt || die "오프라인 설치 실패"
   else
     curl -fsS -m 5 https://pypi.org >/dev/null 2>&1 || die "인터넷 없음. pack.sh 번들을 쓰세요"
-    spin "의존성 설치 (torch 포함, 수 분)" pipx install -r requirements.txt || die "설치 실패"
+    spin "의존성 설치 (torch 포함, 수 분)" pipx install "${TORCH_ARGS[@]}" -r requirements.txt || die "설치 실패"
   fi
   if [ "$OS" = mac ]; then  # ponytail: macOS 대소문자 무시 FS에서 MeCab/(ja)·mecab/(ko) 충돌 → ko만 남김 (MeCab.py 스텁이 ja 자리 대신)
     SP=$(.venv/bin/python -c "import sysconfig;print(sysconfig.get_paths()['purelib'])")
@@ -57,6 +72,7 @@ if not os.path.exists(d): os.symlink(unidic_lite.DICDIR, d)
 PY
   ok "설치 완료"
 fi
+torch_gpu_fix .venv/bin/python torch torchaudio
 
 step "모델"
 if [ -d models ] && [ -z "${HF_HOME:-}" ]; then export HF_HOME="$PWD/models" HF_HUB_OFFLINE=1; fi   # 번들 반입분
