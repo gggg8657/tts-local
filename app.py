@@ -132,7 +132,7 @@ def save_run(text, voice, speed, fmt, data, secs):
 def list_runs():
     out = []
     if os.path.isdir(WS):
-        for name in sorted(os.listdir(WS), reverse=True)[:50]:
+        for name in sorted(os.listdir(WS), key=lambda n: os.path.getmtime(os.path.join(WS, n)), reverse=True)[:50]:
             p = os.path.join(WS, name, "meta.json")
             if os.path.exists(p):
                 try:
