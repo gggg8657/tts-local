@@ -21,7 +21,7 @@ import threading
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from gpu_pick import Lazy, label, pick, torch_device
+from gpu_pick import Lazy, label, pick, release, torch_device
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WS = os.environ.get("WORKSPACE") or os.path.join(ROOT, "_workspace")  # 포털이 AGENT_DATA/<도구> 로 모아 줌
@@ -42,14 +42,17 @@ class Melo:
 
     def _load(self):
         from melo.api import TTS
-        dev = DEVICE if DEVICE != "auto" else "cpu"   # ponytail: 이 모델은 CPU도 충분히 빠름. GPU면 TTS_DEVICE=cuda
+        dev, g = DEVICE if DEVICE != "auto" else "cpu", None   # ponytail: 이 모델은 CPU도 충분히 빠름. GPU면 TTS_DEVICE=cuda
         if dev == "cuda":
             g = pick(2000)                             # 약 1GB 모델 — 여유 2GB 넘는 GPU 중 가장 넉넉한 것, 없으면 CPU
             dev, self.where = torch_device(g), label(g)
         else:
             self.where = dev
         print(f"[tts] MeloTTS {self.where} 에서 로드", flush=True)
-        return TTS(language="KR", device=dev)
+        try:
+            return TTS(language="KR", device=dev)
+        finally:
+            release(g)  # 다 올렸으니 예약 해제 (실제 사용량은 이제 nvidia-smi 에 보임)
 
     @staticmethod
     def _drop_bert():
