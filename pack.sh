@@ -16,7 +16,7 @@ PYV="${PYV:-3.11}"
 # 2) 모델 (HF 캐시 → 번들)
 for m in models--myshell-ai--MeloTTS-Korean models--kykim--bert-kor-base; do cp -R "${HF_HOME:-$HOME/.cache/huggingface}/hub/$m" "$STAGE/models/hub/"; done
 # 3) 앱
-cp app.py ui.html selftest.py setup.sh requirements.txt MeCab.py README.md NOTICE LICENSE "$STAGE/"
+cp app.py gpu_pick.py ui.html selftest.py setup.sh requirements.txt MeCab.py README.md NOTICE LICENSE "$STAGE/"
 cat > "$STAGE/INSTALL.md" <<'INS'
 # 폐쇄망 설치
 tar -xzf tts-local-linux-x64.tar.gz && cd tts-local-linux-x64

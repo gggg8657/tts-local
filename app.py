@@ -21,11 +21,13 @@ import threading
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from gpu_pick import Lazy, label, pick, torch_device
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WS = os.environ.get("WORKSPACE") or os.path.join(ROOT, "_workspace")  # 포털이 AGENT_DATA/<도구> 로 모아 줌
 PORT = int(os.environ.get("PORT", "8771"))
 ENGINE_NAME = os.environ.get("TTS_ENGINE", "melo")       # ponytail: melo만 구현. cosyvoice/kokoro(영문)은 README 참고
-DEVICE = os.environ.get("TTS_DEVICE", "auto")
+DEVICE = os.environ.get("TTS_DEVICE", "auto")     # cuda 면 GPU 를 고정하지 않고, 올릴 때마다 여유 메모리가 가장 큰 GPU 를 고른다
 DEFAULT_VOICE = os.environ.get("TTS_DEFAULT_VOICE", "KR")
 FFMPEG = shutil.which("ffmpeg")
 LOCK = threading.Lock()  # ponytail: 전역 락, 동시 사용자 몇 명이면 충분. 많아지면 워커 풀
@@ -35,30 +37,44 @@ LOCK = threading.Lock()  # ponytail: 전역 락, 동시 사용자 몇 명이면 
 class Melo:
     """MeloTTS Korean. synth(text, voice, speed) -> (sample_rate, pcm16 bytes)"""
     def __init__(self):
-        self._m = None
+        self._m = Lazy(self._load, "MeloTTS", log=lambda s: print(s, flush=True), cleanup=self._drop_bert)  # 오래 안 쓰면 GPU 에서 내림(GPU_IDLE_UNLOAD_S)
+        self.where = "아직 안 올림"
 
     def _load(self):
-        if self._m is None:
-            from melo.api import TTS
-            dev = DEVICE if DEVICE != "auto" else "cpu"   # ponytail: 이 모델은 CPU도 충분히 빠름. GPU면 TTS_DEVICE=cuda
-            self._m = TTS(language="KR", device=dev)
-        return self._m
+        from melo.api import TTS
+        dev = DEVICE if DEVICE != "auto" else "cpu"   # ponytail: 이 모델은 CPU도 충분히 빠름. GPU면 TTS_DEVICE=cuda
+        if dev == "cuda":
+            g = pick(2000)                             # 약 1GB 모델 — 여유 2GB 넘는 GPU 중 가장 넉넉한 것, 없으면 CPU
+            dev, self.where = torch_device(g), label(g)
+        else:
+            self.where = dev
+        print(f"[tts] MeloTTS {self.where} 에서 로드", flush=True)
+        return TTS(language="KR", device=dev)
+
+    @staticmethod
+    def _drop_bert():
+        """MeloTTS 한국어는 BERT 를 모듈 전역(japanese_bert.models·model)에 붙들고 있다(장치 구분 없이) —
+        같이 비워야 VRAM 이 빠지고, 다음에 다른 GPU 로 올릴 때 BERT 도 그 GPU 로 새로 올라간다"""
+        mod = sys.modules.get("melo.text.japanese_bert")
+        if mod is not None:
+            mod.models.clear(); mod.model = None
 
     def voices(self):
-        return list(self._load().hps.data.spk2id.keys())
+        with self._m.use() as m:
+            return list(m.hps.data.spk2id.keys())
 
     def synth(self, text, voice, speed):
-        m = self._load()
-        ids = m.hps.data.spk2id            # HParams: keys()/[] 만 있고 get() 없음
-        spk = ids[voice] if voice in ids.keys() else 0
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            path = f.name
-        try:
-            m.tts_to_file(text, spk, path, speed=float(speed), quiet=True)
-            with wave.open(path, "rb") as w:
-                return w.getframerate(), w.readframes(w.getnframes())
-        finally:
-            os.unlink(path)
+        with self._m.use() as m:
+            ids = m.hps.data.spk2id            # HParams: keys()/[] 만 있고 get() 없음
+            spk = ids[voice] if voice in ids.keys() else 0
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                path = f.name
+            try:
+                m.tts_to_file(text, spk, path, speed=float(speed), quiet=True)
+                with wave.open(path, "rb") as w:
+                    return w.getframerate(), w.readframes(w.getnframes())
+            finally:
+                os.unlink(path)
 
 
 ENGINE = Melo()
@@ -185,7 +201,7 @@ class H(BaseHTTPRequestHandler):
         self.path = self.path.split("?")[0]
         try:
             if self.path in ("/api/voices", "/v1/audio/voices"):
-                return self._send({"voices": ENGINE.voices(), "default": DEFAULT_VOICE, "engine": ENGINE_NAME})
+                return self._send({"voices": ENGINE.voices(), "default": DEFAULT_VOICE, "engine": ENGINE_NAME, "device": getattr(ENGINE, "where", DEVICE)})
             if self.path == "/v1/models":
                 return self._send({"object": "list", "data": [{"id": ENGINE_NAME, "object": "model", "owned_by": "local"}]})
             if self.path == "/api/runs":
@@ -231,5 +247,5 @@ if __name__ == "__main__":
         open(out, "wb").write(data)
         print(f"{out} ({secs:.1f}s)")
         sys.exit(0)
-    print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
+    print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}{' — GPU 는 올릴 때 여유 많은 것 자동' if DEVICE == 'cuda' else ''}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
     ThreadingHTTPServer(("", PORT), H).serve_forever()

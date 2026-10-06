@@ -20,7 +20,8 @@ bash setup.sh stop
 | 환경변수 | 기본 | 설명 |
 |---|---|---|
 | `PORT` | `8771` | |
-| `TTS_DEVICE` | `auto`(=cpu) | `cuda` 로 GPU |
+| `TTS_DEVICE` | `auto`(=cpu) | `cuda` 로 GPU — 번호는 고정하지 않고 모델을 올릴 때 여유 메모리가 가장 큰 GPU 를 고름(`gpu_pick.py`) |
+| `GPU_POOL` / `GPU_IDLE_UNLOAD_S` | (전부) / `600` | GPU 후보 제한 / 이 초 동안 안 쓰면 모델을 내려 VRAM 반환(다음 요청 때 다시 고름, 0 이면 안 내림) |
 | `TTS_DEFAULT_VOICE` | `KR` | MeloTTS 한국어는 화자 1개 |
 | `TTS_ENGINE` | `melo` | 현재 melo만 구현 |
 | `HF_HOME` / `HF_HUB_OFFLINE` | | 모델 캐시 위치 / 폐쇄망 1 |
