@@ -146,6 +146,23 @@ def list_runs():
 HTML = open(os.path.join(ROOT, "ui.html"), encoding="utf-8").read() if os.path.exists(os.path.join(ROOT, "ui.html")) else "ui.html 없음"
 RUN_RE = r"\d{4}-\d{2}-\d{2}-[0-9a-f]{4}"
 
+# ── 저작권 표기 (LICENSE·NOTICE 참고) ─────────────────────────────────────
+_SIG = __import__("base64").b64decode("wqkgMjAyNiDquYDrj5nso7wgwrcgZG9uZ2p1a2ltLmRldkBnbWFpbC5jb20=").decode()
+_SIG_A = __import__("base64").b64decode("RG9uZ0p1IEtpbSA8ZG9uZ2p1a2ltLmRldkBnbWFpbC5jb20+").decode()
+
+
+def signed(html):
+    """화면에 저작권 표기를 붙인다. ui.html 에서 지워져도 서버가 내보낼 때 다시 붙는다."""
+    name, mail = _SIG.split(" · ")
+    if 'name="author"' not in html:
+        meta = f'<meta name="author" content="{name[7:]} <{mail}>">'
+        html = html.replace("<head>", "<head>" + meta, 1) if "<head>" in html else meta + html
+    if "data-sig" not in html:
+        tag = (f'<!-- {_SIG} --><div data-sig title="{mail}" style="text-align:center;font-size:11px;color:#9aa0a6;'
+               f'opacity:.55;margin:28px 0 8px">{name}</div>')
+        html = html.replace("</body>", tag + "</body>", 1) if "</body>" in html else html + tag
+    return html
+
 
 class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a):
@@ -155,6 +172,7 @@ class H(BaseHTTPRequestHandler):
     def _send(self, body, ctype="application/json", code=200):
         b = body if isinstance(body, bytes) else json.dumps(body, ensure_ascii=False).encode()
         self.send_response(code)
+        self.send_header("X-Author", _SIG_A)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(b)))
         self.end_headers()
@@ -176,7 +194,7 @@ class H(BaseHTTPRequestHandler):
             if m:
                 with open(os.path.join(WS, m.group(1), f"audio.{m.group(2)}"), "rb") as f:
                     return self._send(f.read(), "audio/mpeg" if m.group(2) == "mp3" else "audio/wav")
-            self._send(HTML.replace("%VOICE%", json.dumps(DEFAULT_VOICE)).encode(), "text/html; charset=utf-8")
+            self._send(signed(HTML.replace("%VOICE%", json.dumps(DEFAULT_VOICE))).encode(), "text/html; charset=utf-8")
         except FileNotFoundError:
             self._send({"error": "없음"}, code=404)
         except Exception as e:
@@ -213,5 +231,5 @@ if __name__ == "__main__":
         open(out, "wb").write(data)
         print(f"{out} ({secs:.1f}s)")
         sys.exit(0)
-    print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}, ffmpeg={'yes' if FFMPEG else 'no'})")
+    print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
     ThreadingHTTPServer(("", PORT), H).serve_forever()
