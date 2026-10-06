@@ -166,7 +166,7 @@ def signed(html):
 
 class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a):
-        if "/v1/" in (a[0] if a else "") or "/api/tts" in (a[0] if a else ""):
+        if "/v1/" in (str(a[0]) if a else "") or "/api/tts" in (str(a[0]) if a else ""):
             super().log_message(fmt, *a)
 
     def _send(self, body, ctype="application/json", code=200):
