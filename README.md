@@ -51,3 +51,12 @@ OpenAI SDK도 그대로: `OpenAI(base_url="http://<서버>:8771/v1", api_key="x"
 - `selftest.py` 는 가짜 엔진으로 분리·연결·mp3·API 파싱만 검사(모델 불필요).
 
 출처·라이선스: `NOTICE`.
+
+## 출처·감사 (Credits)
+
+- [MeloTTS](https://github.com/myshell-ai/MeloTTS) (MIT, MyShell.ai) + 한국어 체크포인트 [myshell-ai/MeloTTS-Korean](https://huggingface.co/myshell-ai/MeloTTS-Korean) (MIT)
+- 한국어 BERT [kykim/bert-kor-base](https://huggingface.co/kykim/bert-kor-base) (라이선스는 원 저장소 참고)
+- [g2pkk](https://github.com/harmlessman/g2pkk) (Apache-2.0), python-mecab-ko + mecab-ko-dic (Apache-2.0 / BSD 계열)
+- 이 도구는 [agent-page-portal](https://github.com/gggg8657/agent-page-portal) 에 연결해 쓰도록 만들었습니다(단독 실행도 됨).
+
+저작권 표기·전체 목록은 `NOTICE` 를 보세요.
