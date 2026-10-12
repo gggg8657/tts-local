@@ -135,9 +135,19 @@ def speak(text, voice=DEFAULT_VOICE, speed=1.0, fmt="wav", on_progress=None):
     return (to_mp3(wav), "audio/mpeg", secs) if fmt == "mp3" else (wav, "audio/wav", secs)
 
 
-def save_run(text, voice, speed, fmt, data, secs):
+def user_ws(h):
+    """포털이 넘긴 사용자별 작업 폴더. owner(서버 주인)·헤더 없음(단독 실행) = 예전 WORKSPACE 그대로"""
+    u = (h.headers.get("X-Agent-User") or "owner").strip()
+    if u == "owner":
+        return WS
+    d = os.path.join(WS, "u", re.sub(r"[^A-Za-z0-9_.-]", "_", u)[:64] or "_")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+def save_run(ws, text, voice, speed, fmt, data, secs):
     run_id = f"{datetime.date.today()}-{secrets.token_hex(2)}"
-    d = os.path.join(WS, run_id)
+    d = os.path.join(ws, run_id)
     os.makedirs(d)
     with open(os.path.join(d, f"audio.{fmt}"), "wb") as f:
         f.write(data)
@@ -148,11 +158,11 @@ def save_run(text, voice, speed, fmt, data, secs):
     return meta
 
 
-def list_runs():
+def list_runs(ws):
     out = []
-    if os.path.isdir(WS):
-        for name in sorted(os.listdir(WS), key=lambda n: os.path.getmtime(os.path.join(WS, n)), reverse=True)[:50]:
-            p = os.path.join(WS, name, "meta.json")
+    if os.path.isdir(ws):
+        for name in sorted(os.listdir(ws), key=lambda n: os.path.getmtime(os.path.join(ws, n)), reverse=True)[:50]:
+            p = os.path.join(ws, name, "meta.json")
             if os.path.exists(p):
                 try:
                     out.append(json.load(open(p, encoding="utf-8")))
@@ -208,10 +218,10 @@ class H(BaseHTTPRequestHandler):
             if self.path == "/v1/models":
                 return self._send({"object": "list", "data": [{"id": ENGINE_NAME, "object": "model", "owned_by": "local"}]})
             if self.path == "/api/runs":
-                return self._send(list_runs())
+                return self._send(list_runs(user_ws(self)))
             m = re.fullmatch(rf"/audio/({RUN_RE})\.(wav|mp3)", self.path)
             if m:
-                with open(os.path.join(WS, m.group(1), f"audio.{m.group(2)}"), "rb") as f:
+                with open(os.path.join(user_ws(self), m.group(1), f"audio.{m.group(2)}"), "rb") as f:
                     return self._send(f.read(), "audio/mpeg" if m.group(2) == "mp3" else "audio/wav")
             self._send(signed(HTML.replace("%VOICE%", json.dumps(DEFAULT_VOICE))).encode(), "text/html; charset=utf-8")
         except FileNotFoundError:
@@ -231,7 +241,7 @@ class H(BaseHTTPRequestHandler):
                 return self._send(data, mime)
             if self.path == "/api/tts":                   # 웹 UI: 저장 + 메타 JSON
                 data, mime, secs = speak(text, voice, speed, fmt)
-                return self._send(save_run(text, voice, speed, fmt, data, secs))
+                return self._send(save_run(user_ws(self), text, voice, speed, fmt, data, secs))
             self._send({"error": "없음"}, code=404)
         except ValueError as e:
             self._send({"error": {"message": str(e), "type": "invalid_request_error"}}, code=400)
@@ -251,4 +261,4 @@ if __name__ == "__main__":
         print(f"{out} ({secs:.1f}s)")
         sys.exit(0)
     print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}{' — GPU 는 올릴 때 여유 많은 것 자동' if DEVICE == 'cuda' else ''}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
-    ThreadingHTTPServer(("", PORT), H).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", ""), PORT), H).serve_forever()

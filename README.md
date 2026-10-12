@@ -49,6 +49,8 @@ bash setup.sh stop
 
 [agent-page-portal](https://github.com/gggg8657/agent-page-portal)에서 띄우면 포털이 포트(8771)·`WORKSPACE`·`TTS_DEVICE=cuda`를 넣어 줍니다. LLM은 쓰지 않습니다.
 
+포털을 거쳐 쓰면 기록은 **사용자별로 따로 저장**됩니다(포털 접속자 기준, `WORKSPACE/u/<사용자>/`) — 다른 사람 기록은 목록에도 안 보이고 id 로도 못 엽니다. 서버 주인(owner)과 포털 없이 단독 실행은 예전처럼 `WORKSPACE` 바로 아래(예전 기록 포함). `/v1/audio/speech`(OpenAI 호환, 다른 도구가 부르는 길)는 저장하지 않으므로 누구의 기록에도 남지 않습니다.
+
 | 환경변수 | 기본 | 설명 |
 |---|---|---|
 | `PORT` | `8771` | |
