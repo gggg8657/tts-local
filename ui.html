@@ -42,7 +42,7 @@ fetch('api/voices').then(r => r.json()).then(j => {
 $('speed').oninput = () => $('spv').textContent = Number($('speed').value).toFixed(1);
 
 function show(m) {
-  const url = `/audio/${m.run_id}.${m.format}`;
+  const url = `audio/${m.run_id}.${m.format}`;
   $('player').src = url; $('player').hidden = false; $('player').play().catch(() => {});
   $('dl').href = url; $('dl').download = `${m.run_id}.${m.format}`; $('dl').hidden = false;
   $('status').textContent = `완료 · ${m.seconds}초 분량`;
