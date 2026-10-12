@@ -18,9 +18,10 @@ This package wraps (does not modify) the following open-source software:
   MeloTTS also installs other-language dependencies, some GPL (pykakasi GPL-3.0+, Unidecode GPL-2.0+, Distance GPL) and,
   with GPU torch, NVIDIA proprietary CUDA wheels — none are bundled in this repository; see
   https://github.com/gggg8657/tts-local/issues/2 before redistributing a pack.sh bundle.
+  pykakasi is never loaded: the authored stub pykakasi.py shadows it (Korean only).
   No voice cloning. F5-TTS is not used (its released weights are CC-BY-NC-4.0).
 
-Files authored for this package (MIT): app.py, ui.html, selftest.py, setup.sh, pack.sh, MeCab.py, README.md
+Files authored for this package (MIT): app.py, ui.html, selftest.py, setup.sh, pack.sh, MeCab.py, pykakasi.py, README.md
 
 This package: Copyright (c) 2026 DongJu Kim (gggg8657) <dongjukim.dev@gmail.com>
 제3자 구성요소 전체 표·상업 이용 확인 항목: THIRD_PARTY_NOTICES.md

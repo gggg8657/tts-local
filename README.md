@@ -87,6 +87,7 @@ OpenAI SDK도 그대로: `OpenAI(base_url="http://<서버>:8771/v1", api_key="x"
 ## 구현 메모
 - 서버는 stdlib `http.server`, 합성은 venv 안 MeloTTS 인프로세스. 전역 락 1개(동시 사용자 몇 명 수준).
 - macOS 전용 우회: 대소문자 무시 파일시스템에서 MeloTTS 의존성 `mecab-python3`(일본어용)와 `python-mecab-ko`(한국어)가 같은 폴더로 합쳐져 깨짐 → setup.sh 가 한국어 것만 남기고, `MeCab.py` 스텁이 일본어 모듈 자리를 채움. Linux 서버에서는 해당 없음.
+- `pykakasi.py` 스텁: MeloTTS 가 한국어만 써도 일본어 모듈을 import 하며 GPL-3.0+ `pykakasi` 를 불러옴 → 저장소의 스텁이 그 자리를 대신해 GPL 패키지를 로드하지 않음(일본어 문장은 오류). 합성 결과는 스텁 전과 바이트 단위로 같음.
 - 일본어용 사전 `unidic`(500MB) 다운로드 대신 `unidic_lite` 를 링크(한국어엔 안 쓰임).
 - `selftest.py` 는 가짜 엔진으로 분리·연결·mp3·API 파싱만 검사(모델 불필요).
 
@@ -94,7 +95,7 @@ OpenAI SDK도 그대로: `OpenAI(base_url="http://<서버>:8771/v1", api_key="x"
 
 - [MeloTTS](https://github.com/myshell-ai/MeloTTS) (MIT, MyShell.ai) + 한국어 체크포인트 [myshell-ai/MeloTTS-Korean](https://huggingface.co/myshell-ai/MeloTTS-Korean) (MIT)
 - 한국어 BERT [kykim/bert-kor-base](https://huggingface.co/kykim/bert-kor-base) — 모델 카드에 라이선스 없음, 원 저장소 [LMkor](https://github.com/kiyoungkim1/LMkor) 는 Apache-2.0 과 "상업적 사용은 MOU" 를 함께 적음 → 상업 이용 전 확인 필요 ([#1](https://github.com/gggg8657/tts-local/issues/1))
-- MeloTTS 가 함께 설치하는 다른 언어용 의존성 중 GPL(pykakasi·Unidecode·Distance)과 NVIDIA CUDA 휠(독점)이 있음 — 저장소에 동봉하지 않으며, `pack.sh` 번들을 외부에 넘기기 전 확인 ([#2](https://github.com/gggg8657/tts-local/issues/2))
+- MeloTTS 가 함께 설치하는 다른 언어용 의존성 중 GPL(pykakasi·Unidecode·Distance — 실행 중에는 로드하지 않음, `pykakasi.py` 스텁)과 NVIDIA CUDA 휠(독점)이 있음 — 저장소에 동봉하지 않으며, `pack.sh` 번들을 외부에 넘기기 전 확인 ([#2](https://github.com/gggg8657/tts-local/issues/2))
 - [g2pkk](https://github.com/harmlessman/g2pkk) (Apache-2.0), python-mecab-ko (BSD-3-Clause) + python-mecab-ko-dic (Apache-2.0), ffmpeg (MP3 변환, 시스템 프로그램)
 - 이 도구는 [agent-page-portal](https://github.com/gggg8657/agent-page-portal) 에 연결해 쓰도록 만들었습니다(단독 실행도 됨).
 
