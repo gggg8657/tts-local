@@ -1,15 +1,27 @@
 tts-local
 =========
 
+이 저장소의 원저작물(코드·UI·프롬프트·문서·도구 설계)은 DongJu Kim(gggg8657)이 작성했다.
+제3자 구성요소는 각자의 라이선스를 따르며 THIRD_PARTY_NOTICES.md 에 적었다.
+제3자 구성요소의 권리는 이 저장소의 라이선스로 바뀌지 않는다.
+연구·내부 시험용 프로토타입이며 배포·상업 서비스용이 아니다.
+
 This package wraps (does not modify) the following open-source software:
 
   MeloTTS — https://github.com/myshell-ai/MeloTTS   (MIT, MyShell.ai)
     Korean checkpoint: https://huggingface.co/myshell-ai/MeloTTS-Korean (MIT)
     Korean BERT used by the Korean frontend: https://huggingface.co/kykim/bert-kor-base
+      (no license on the model card; upstream LMkor README says Apache-2.0 but also asks commercial users for an MOU —
+       check before commercial use: https://github.com/gggg8657/tts-local/issues/1)
   python-mecab-ko + mecab-ko-dic — Korean morphological analyzer used by g2pkk (Apache-2.0 / BSD-style)
   g2pkk — Korean grapheme-to-phoneme (Apache-2.0)
+  MeloTTS also installs other-language dependencies, some GPL (pykakasi GPL-3.0+, Unidecode GPL-2.0+, Distance GPL) and,
+  with GPU torch, NVIDIA proprietary CUDA wheels — none are bundled in this repository; see
+  https://github.com/gggg8657/tts-local/issues/2 before redistributing a pack.sh bundle.
+  No voice cloning. F5-TTS is not used (its released weights are CC-BY-NC-4.0).
 
 Files authored for this package (MIT): app.py, ui.html, selftest.py, setup.sh, pack.sh, MeCab.py, README.md
 
-This package: Copyright (c) 2026 gggg8657 <dongjukim.dev@gmail.com>
+This package: Copyright (c) 2026 DongJu Kim (gggg8657)
+제3자 구성요소 전체 표·상업 이용 확인 항목: THIRD_PARTY_NOTICES.md
 화면 하단·메타데이터의 저작자 표기는 지우거나 바꾸지 마세요.

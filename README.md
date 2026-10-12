@@ -2,6 +2,8 @@
 
 > 글을 문장 단위로 나눠 [MeloTTS](https://github.com/myshell-ai/MeloTTS)로 합성합니다. 웹에서 듣거나 WAV·MP3로 받고, OpenAI 음성 API와 같은 `/v1/audio/speech`로 호출할 수 있습니다.
 
+> ⚠️ 연구·내부 시험용 프로토타입입니다(배포·상업 서비스용 아님). 제3자 구성요소의 라이선스는 THIRD_PARTY_NOTICES.md 를 확인하세요.
+
 ![음성 합성 화면 — 번호는 아래 사용 방법과 대응](docs/img/ui.png)
 
 ## 무엇을 하나
@@ -11,7 +13,7 @@
 - 클라우드·API 키 없음. 한국어 외 언어는 지원하지 않습니다(영어 섞인 문장은 읽음).
 - **설치**: `bash setup.sh` 하나 (Python 3.11 venv → MeloTTS → 모델 다운로드 → 자가검증 → 서버). 폐쇄망은 `pack.sh` 번들.
 - **외부 통신**: 모델 최초 다운로드만. 반입 후 `HF_HUB_OFFLINE=1`.
-- **품질**: 또박또박 읽는 뉴스 톤 1종(`KR`). 감정·화자 복제는 없음 → 필요하면 CosyVoice2(Apache, 한국어, GPU) 또는 F5-TTS(MIT, 복제)로 교체.
+- **품질**: 또박또박 읽는 뉴스 톤 1종(`KR`). 감정·화자 복제는 없음 → 필요하면 CosyVoice2(Apache, 한국어, GPU) 또는 F5-TTS(복제; 코드는 MIT 이지만 공개 가중치는 CC-BY-NC-4.0 비상업)로 교체.
 
 ## 사용 방법
 
@@ -91,12 +93,17 @@ OpenAI SDK도 그대로: `OpenAI(base_url="http://<서버>:8771/v1", api_key="x"
 ## 출처·감사 (Credits)
 
 - [MeloTTS](https://github.com/myshell-ai/MeloTTS) (MIT, MyShell.ai) + 한국어 체크포인트 [myshell-ai/MeloTTS-Korean](https://huggingface.co/myshell-ai/MeloTTS-Korean) (MIT)
-- 한국어 BERT [kykim/bert-kor-base](https://huggingface.co/kykim/bert-kor-base) (라이선스는 원 저장소 참고)
-- [g2pkk](https://github.com/harmlessman/g2pkk) (Apache-2.0), python-mecab-ko + mecab-ko-dic (Apache-2.0 / BSD 계열)
+- 한국어 BERT [kykim/bert-kor-base](https://huggingface.co/kykim/bert-kor-base) — 모델 카드에 라이선스 없음, 원 저장소 [LMkor](https://github.com/kiyoungkim1/LMkor) 는 Apache-2.0 과 "상업적 사용은 MOU" 를 함께 적음 → 상업 이용 전 확인 필요 ([#1](https://github.com/gggg8657/tts-local/issues/1))
+- MeloTTS 가 함께 설치하는 다른 언어용 의존성 중 GPL(pykakasi·Unidecode·Distance)과 NVIDIA CUDA 휠(독점)이 있음 — 저장소에 동봉하지 않으며, `pack.sh` 번들을 외부에 넘기기 전 확인 ([#2](https://github.com/gggg8657/tts-local/issues/2))
+- [g2pkk](https://github.com/harmlessman/g2pkk) (Apache-2.0), python-mecab-ko (BSD-3-Clause) + python-mecab-ko-dic (Apache-2.0), ffmpeg (MP3 변환, 시스템 프로그램)
 - 이 도구는 [agent-page-portal](https://github.com/gggg8657/agent-page-portal) 에 연결해 쓰도록 만들었습니다(단독 실행도 됨).
 
-저작권 표기·전체 목록은 `NOTICE` 를 보세요.
+제3자 구성요소 전체 표(버전·라이선스·상업 이용)는 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), 저작권 표기는 `NOTICE` 를 보세요.
 
 ## 라이선스
 
-MIT License — Copyright (c) 2026 gggg8657. `LICENSE` 참고.
+MIT License — Copyright (c) 2026 DongJu Kim (gggg8657). `LICENSE` 참고. 제3자 구성요소는 각자의 라이선스를 따릅니다.
+
+## 만든 사람
+
+DongJu Kim (gggg8657) — 설계·구현
