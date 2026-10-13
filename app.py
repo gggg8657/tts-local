@@ -26,6 +26,7 @@ from gpu_pick import Lazy, label, pick, release, torch_device
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WS = os.environ.get("WORKSPACE") or os.path.join(ROOT, "_workspace")  # 포털이 AGENT_DATA/<도구> 로 모아 줌
 PORT = int(os.environ.get("PORT", "8771"))
+MAX_BODY = 2**20  # 요청 본문 상한(글만 받음, 1MB)
 ENGINE_NAME = os.environ.get("TTS_ENGINE", "melo")       # ponytail: melo만 구현. cosyvoice/kokoro(영문)은 README 참고
 DEVICE = os.environ.get("TTS_DEVICE", "auto")     # cuda 면 GPU 를 고정하지 않고, 올릴 때마다 여유 메모리가 가장 큰 GPU 를 고른다
 DEFAULT_VOICE = os.environ.get("TTS_DEFAULT_VOICE", "KR")
@@ -231,6 +232,15 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.path = self.path.split("?")[0]
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = 0
+        if n > MAX_BODY:
+            self.close_connection = True
+            while n > 0 and self.rfile.read(min(n, 1 << 20)):  # 본문을 버려 읽어야 포털(프록시)이 502 대신 413 을 받는다
+                n -= 1 << 20
+            return self._send({"error": {"message": f"요청이 너무 큽니다 (최대 {MAX_BODY // 2**20}MB)", "type": "invalid_request_error"}}, code=413)
         try:
             req = self._json()
             text = req.get("input") or req.get("text") or ""
