@@ -1,6 +1,6 @@
 # 제3자 구성요소 고지 (THIRD_PARTY_NOTICES)
 
-tts-local 의 원저작물은 DongJu Kim(gggg8657)이 작성했습니다(`NOTICE`, `LICENSE`). 아래 제3자 구성요소는 각자의 라이선스를 따르며, 이 저장소의 MIT 라이선스로 바뀌지 않습니다.
+tts-local 의 원저작물은 DongJu Kim(gggg8657)이 작성했습니다(`NOTICE`, `LICENSE`). 아래 제3자 구성요소는 각자의 라이선스를 따르며, 이 저장소의 라이선스(PolyForm Noncommercial 1.0.0)로 바뀌지 않습니다.
 조사일: 2026-10-12 (실제 파일·`.venv` 설치 메타데이터·한국어 합성 1회 후 로드된 모듈·setup.sh·pack.sh 기준). "상업 이용" 칸은 확인한 라이선스 문구를 요약한 것이며 법률 판단이 아닙니다.
 
 이 저장소에는 제3자 코드·가중치·음성이 **들어 있지 않습니다**(`.venv/`, `models/` 는 `.gitignore`). `MeCab.py`·`pykakasi.py` 는 이 저장소 저작자가 쓴 스텁입니다(일본어용 mecab·pykakasi 자리를 대신함). 아래는 `setup.sh` 가 설치하거나 내려받는 것입니다. `pack.sh` 로 만든 폐쇄망 번들은 휠과 가중치를 함께 묶으므로(재배포) 번들을 외부에 넘길 때는 아래 라이선스를 같이 전달하세요.
