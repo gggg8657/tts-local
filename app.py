@@ -20,6 +20,7 @@ import tempfile
 import threading
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import portal_auth  # 포털 서명 확인 관문·오류 문장 정리(원본 agent-page-portal/sdk/portal_auth.py)
 
 from gpu_pick import Lazy, label, pick, release, torch_device
 
@@ -224,11 +225,13 @@ class H(BaseHTTPRequestHandler):
             if m:
                 with open(os.path.join(user_ws(self), m.group(1), f"audio.{m.group(2)}"), "rb") as f:
                     return self._send(f.read(), "audio/mpeg" if m.group(2) == "mp3" else "audio/wav")
+            if self.path.split("?")[0].startswith("/api/"):   # 없는 API 경로는 화면 대신 JSON 404
+                return self._send({"error": "not found"}, code=404)
             self._send(signed(HTML.replace("%VOICE%", json.dumps(DEFAULT_VOICE))).encode(), "text/html; charset=utf-8")
         except FileNotFoundError:
             self._send({"error": "없음"}, code=404)
         except Exception as e:
-            self._send({"error": f"{type(e).__name__}: {e}"}, code=500)
+            self._send({"error": portal_auth.scrub(f"{type(e).__name__}: {e}")}, code=500)
 
     def do_POST(self):
         self.path = self.path.split("?")[0]
@@ -271,4 +274,4 @@ if __name__ == "__main__":
         print(f"{out} ({secs:.1f}s)")
         sys.exit(0)
     print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}{' — GPU 는 올릴 때 여유 많은 것 자동' if DEVICE == 'cuda' else ''}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
-    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), __import__("portal_auth").install(H, "tts-local")).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), portal_auth.install(H, "tts-local")).serve_forever()
