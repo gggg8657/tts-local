@@ -271,4 +271,4 @@ if __name__ == "__main__":
         print(f"{out} ({secs:.1f}s)")
         sys.exit(0)
     print(f"tts-local → http://localhost:{PORT}  (engine={ENGINE_NAME}, device={DEVICE}{' — GPU 는 올릴 때 여유 많은 것 자동' if DEVICE == 'cuda' else ''}, ffmpeg={'yes' if FFMPEG else 'no'})  {_SIG}")
-    ThreadingHTTPServer((os.environ.get("BIND", ""), PORT), H).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), __import__("portal_auth").install(H, "tts-local")).serve_forever()
